@@ -1,0 +1,55 @@
+name: Build Nitter
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: '0 1 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: (github.event_name != 'schedule' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Nitter code
+      uses: actions/checkout@v3
+      with:
+        repository: zedeus/nitter
+        ref: master
+
+    - name: Setup Nim
+      uses: jiro4989/setup-nim-action@v1.4.7
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsass-dev
+
+    - name: Build Nitter
+      run: |
+        nimble build -y -d:release
+        nimble scss
+        nimble md
+        cp nitter.example.conf nitter.conf
+
+    - name: Package
+      run: tar -czvf nitter.tar.gz nitter public nitter.conf
+
+    - name: Create Release Name
+      run: echo "RELEASE_NAME=$(date +'%Y.%m.%d')-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+
+    - name: Create GitHub Release
+      if: github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
+      with:
+        name: ${{ env.RELEASE_NAME }}
+        files: nitter.tar.gz
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: ${{ env.RELEASE_NAME }}g
