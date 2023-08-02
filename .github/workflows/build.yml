@@ -29,27 +29,32 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsass-dev
+        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libsass-dev
 
-    - name: Build Nitter
+    - name: Build Nitter for AMD 64
       run: |
         nimble build -y -d:release
         nimble scss
         nimble md
         cp nitter.example.conf nitter.conf
+        tar -czvf nitter-amd64.tar.gz nitter public nitter.conf
+        rm nitter
 
-    - name: Package
-      run: tar -czvf nitter.tar.gz nitter public nitter.conf
+    - name: Build Nitter for ARM 64
+      run: |
+        nimble build -y -d:release --cpu:arm64
+        tar -czvf nitter-arm64.tar.gz nitter public nitter.conf
 
     - name: Create Release Name
       run: echo "RELEASE_NAME=$(date +'%Y.%m.%d')-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
 
     - name: Create GitHub Release
       if: github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v1
       with:
         name: ${{ env.RELEASE_NAME }}
-        files: nitter.tar.gz
+        files: |
+          nitter-amd64.tar.gz
+          nitter-arm64.tar.gz
         token: ${{ secrets.GITHUB_TOKEN }}
-        tag_name: ${{ env.RELEASE_NAME }}g
+        tag_name: ${{ env.RELEASE_NAME }}
