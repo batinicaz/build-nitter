@@ -20,7 +20,8 @@ jobs:
     - name: Checkout Nitter code
       uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # ratchet:actions/checkout@v3
       with:
-        repository: zedeus/nitter
+        # Temp fork for usage with real accounts: https://github.com/batinicaz/nitter/commit/acc2b906668e5dd405a3a1453250c3a873db7220
+        repository: batinicaz/nitter
         ref: guest_accounts
 
     - name: Get HEAD ref of Nitter
