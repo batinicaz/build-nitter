@@ -1,5 +1,4 @@
 name: Build Nitter
-
 on:
   push:
     branches:
@@ -7,82 +6,70 @@ on:
   pull_request:
   schedule:
     - cron: '0 1 * * *'
-
 permissions:
   contents: write
-
 jobs:
   build:
     if: (github.event_name != 'schedule' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout Nitter code
-      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # ratchet:actions/checkout@v3
-      with:
-        repository: zedeus/nitter
-        ref: guest_accounts
-
-    - name: Get HEAD ref of Nitter
-      run: |
-        echo NITTER_COMMIT=$(git rev-parse --short HEAD) >> $GITHUB_ENV
-
-    - name: Get last release
-      id: get_release
-      uses: octokit/request-action@7e93b91076fad3920c29d44eb2a6311d929db3dd # ratchet:octokit/request-action@v2.1.0
-      with:
-        route: GET /repos/{owner}/{repo}/releases/latest
-        owner: ${{ github.repository_owner }}
-        repo: ${{ github.event.repository.name }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Compare commits
-      run: |
-        RELEASE_COMMIT=$(echo "${{ fromJson(steps.get_release.outputs.data).tag_name }}" | cut -d "-" -f 2)
-        if [ "$NITTER_COMMIT" == "$RELEASE_COMMIT" ]; then
-          echo "SKIP_BUILD=true" >> $GITHUB_ENV
-        else
-          echo "SKIP_BUILD=false" >> $GITHUB_ENV
-        fi
-
-    - name: Setup Nim
-      if: env.SKIP_BUILD == 'false'
-      uses: jiro4989/setup-nim-action@7867b7bd430d6f91e7ee54a70bd60e614b5b6c12 # ratchet:jiro4989/setup-nim-action@v1.4.7
-
-    - name: Install dependencies
-      if: env.SKIP_BUILD == 'false'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libsass-dev
-
-    - name: Build Nitter for AMD 64
-      if: env.SKIP_BUILD == 'false'
-      run: |
-        nimble build -y -d:release
-        nimble scss
-        nimble md
-        cp nitter.example.conf nitter.conf
-        tar -czvf nitter-amd64.tar.gz nitter public nitter.conf
-        rm nitter
-
-    - name: Build Nitter for ARM 64
-      if: env.SKIP_BUILD == 'false'
-      run: |
-        nimble build -y -d:release --cpu:arm64
-        tar -czvf nitter-arm64.tar.gz nitter public nitter.conf
-
-    - name: Create Release Name
-      if: env.SKIP_BUILD == 'false'
-      run: echo "RELEASE_NAME=$(date +'%Y.%m.%d')-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-    - name: Create GitHub Release
-      if: github.ref == 'refs/heads/main' && env.SKIP_BUILD == 'false'
-      uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # ratchet:softprops/action-gh-release@v1
-      with:
-        name: ${{ env.RELEASE_NAME }}
-        files: |
-          nitter-amd64.tar.gz
-          nitter-arm64.tar.gz
-        token: ${{ secrets.GITHUB_TOKEN }}
-        tag_name: ${{ env.RELEASE_NAME }}
+      - name: Checkout Nitter code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4
+        with:
+          repository: zedeus/nitter
+          ref: guest_accounts
+      - name: Get HEAD ref of Nitter
+        run: |
+          echo NITTER_COMMIT=$(git rev-parse --short HEAD) >> $GITHUB_ENV
+      - name: Get last release
+        id: get_release
+        uses: octokit/request-action@dad4362715b7fb2ddedf9772c8670824af564f0d # ratchet:octokit/request-action@v2.4.0
+        with:
+          route: GET /repos/{owner}/{repo}/releases/latest
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compare commits
+        run: |
+          RELEASE_COMMIT=$(echo "${{ fromJson(steps.get_release.outputs.data).tag_name }}" | cut -d "-" -f 2)
+          if [ "$NITTER_COMMIT" == "$RELEASE_COMMIT" ]; then
+            echo "SKIP_BUILD=true" >> $GITHUB_ENV
+          else
+            echo "SKIP_BUILD=false" >> $GITHUB_ENV
+          fi
+      - name: Setup Nim
+        if: env.SKIP_BUILD == 'false'
+        uses: jiro4989/setup-nim-action@7867b7bd430d6f91e7ee54a70bd60e614b5b6c12 # ratchet:jiro4989/setup-nim-action@v1.4.7
+      - name: Install dependencies
+        if: env.SKIP_BUILD == 'false'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libsass-dev
+      - name: Build Nitter for AMD 64
+        if: env.SKIP_BUILD == 'false'
+        run: |
+          nimble build -y -d:release
+          nimble scss
+          nimble md
+          cp nitter.example.conf nitter.conf
+          tar -czvf nitter-amd64.tar.gz nitter public nitter.conf
+          rm nitter
+      - name: Build Nitter for ARM 64
+        if: env.SKIP_BUILD == 'false'
+        run: |
+          nimble build -y -d:release --cpu:arm64
+          tar -czvf nitter-arm64.tar.gz nitter public nitter.conf
+      - name: Create Release Name
+        if: env.SKIP_BUILD == 'false'
+        run: echo "RELEASE_NAME=$(date +'%Y.%m.%d')-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Create GitHub Release
+        if: github.ref == 'refs/heads/main' && env.SKIP_BUILD == 'false'
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # ratchet:softprops/action-gh-release@v1
+        with:
+          name: ${{ env.RELEASE_NAME }}
+          files: |
+            nitter-amd64.tar.gz
+            nitter-arm64.tar.gz
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ env.RELEASE_NAME }}
