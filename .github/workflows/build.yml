@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # ratchet:actions/checkout@v4
         with:
           repository: zedeus/nitter
-          ref: guest_accounts
+          ref: master
       - name: Get HEAD ref of Nitter
         run: |
           echo NITTER_COMMIT=$(git rev-parse --short HEAD) >> $GITHUB_ENV
@@ -49,7 +49,7 @@ jobs:
       - name: Build Nitter for AMD 64
         if: env.SKIP_BUILD == 'false'
         run: |
-          nimble build -y -d:release
+          nimble build -y -d:danger --mm:refc
           nimble scss
           nimble md
           cp nitter.example.conf nitter.conf
@@ -58,7 +58,7 @@ jobs:
       - name: Build Nitter for ARM 64
         if: env.SKIP_BUILD == 'false'
         run: |
-          nimble build -y -d:release --cpu:arm64
+          nimble build -y -d:danger --mm:refc --cpu:arm64
           tar -czvf nitter-arm64.tar.gz nitter public nitter.conf
       - name: Create Release Name
         if: env.SKIP_BUILD == 'false'
