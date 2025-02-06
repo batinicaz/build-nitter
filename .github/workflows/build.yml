@@ -47,7 +47,7 @@ jobs:
         if: env.SKIP_BUILD == 'false'
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libsass-dev
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libsass-dev libpcre3 libpcre3-dev
       - name: Build Nitter for AMD 64
         if: env.SKIP_BUILD == 'false'
         run: |
