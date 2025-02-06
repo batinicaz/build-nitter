@@ -40,7 +40,9 @@ jobs:
           fi
       - name: Setup Nim
         if: env.SKIP_BUILD == 'false'
-        uses: jiro4989/setup-nim-action@7867b7bd430d6f91e7ee54a70bd60e614b5b6c12 # ratchet:jiro4989/setup-nim-action@v1.4.7
+        uses: jiro4989/setup-nim-action@3a60cf06f20c1cf3a9becf76b30288c0361d5f1e # ratchet:jiro4989/setup-nim-action@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install dependencies
         if: env.SKIP_BUILD == 'false'
         run: |
